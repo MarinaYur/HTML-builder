@@ -2,27 +2,29 @@ const fsp = require('fs/promises');
 const fs = require('fs');
 const path = require('path');
 const pathToTemplate = path.join(__dirname, 'template.html');
+const pathToComponents = path.join(__dirname, 'components');
 const pathToHeader = path.join(__dirname, 'components/header.html');
 const pathToFooter = path.join(__dirname, 'components/footer.html');
 const pathToArticles = path.join(__dirname, 'components/articles.html');
 const pathToProjectDist = path.join(__dirname, 'project-dist');
 const pathToIndexHtml = path.join(pathToProjectDist, 'index.html');
 const pathToStylesFolder = path.join(__dirname, 'styles');
+let indexHtmlContent;
 
 async function buildSite() {
   try {
-    let templateContent = await fsp.readFile(pathToTemplate, 'utf8');
-    let headerContent = await fsp.readFile(pathToHeader, 'utf8');
-    let footerContent = await fsp.readFile(pathToFooter, 'utf8');
-    let articlesContent = await fsp.readFile(pathToArticles, 'utf8');
+    // let templateContent = await fsp.readFile(pathToTemplate, 'utf8');
+    // let headerContent = await fsp.readFile(pathToHeader, 'utf8');
+    // let footerContent = await fsp.readFile(pathToFooter, 'utf8');
+    // let articlesContent = await fsp.readFile(pathToArticles, 'utf8');
 
-    let indexHtmlContent = templateContent
-      .replace(/{{header}}/, headerContent.trim())
-      .replace(/{{footer}}/, footerContent.trim())
-      .replace(/{{articles}}/, articlesContent);
+    // let indexHtmlContent = templateContent
+    //   .replace(/{{header}}/, headerContent.trim())
+    //   .replace(/{{footer}}/, footerContent.trim())
+    //   .replace(/{{articles}}/, articlesContent);
 
+    changeTemplateContent();
     await fsp.mkdir(pathToProjectDist, { recursive: true });
-    await fsp.writeFile(pathToIndexHtml, indexHtmlContent);
     createStylesFile();
     await fsp.rm(path.join(pathToProjectDist, 'assets'), {
       force: true,
@@ -34,7 +36,7 @@ async function buildSite() {
     const dirOfAssets = await fsp.readdir(path.join(__dirname, 'assets'));
     // copying assets
     for (let assetsDir of dirOfAssets) {
-      console.log(assetsDir);
+      // console.log(assetsDir);
       fs.rm(
         path.join(__dirname, 'project-dist', assetsDir),
         { force: true, recursive: true },
@@ -69,11 +71,47 @@ async function buildSite() {
     console.error(err.message);
   }
 }
+
+// let headerContent = await fsp.readFile(pathToHeader, 'utf8');
+// let footerContent = await fsp.readFile(pathToFooter, 'utf8');
+// let articlesContent = await fsp.readFile(pathToArticles, 'utf8');
+
+// let indexHtmlContent = templateContent
+//   .replace(/{{header}}/, headerContent.trim())
+//   .replace(/{{footer}}/, footerContent.trim())
+//   .replace(/{{articles}}/, articlesContent);
+
+async function changeTemplateContent() {
+  try {
+    const templateContent = await fsp.readFile(pathToTemplate, 'utf8');
+    let indexHtmlContent = templateContent;
+    const componentsContent = await fsp.readdir(pathToComponents, 'utf8');
+
+    componentsContent.forEach(async (htmlChunk) => {
+      const htmlChunkName = path.parse(htmlChunk).name;
+      const htmlChunkContent = await fsp.readFile(
+        path.join(__dirname, `components/${htmlChunk}`),
+        'utf8',
+      );
+      const regex = new RegExp(`{{${htmlChunkName}}}`);
+      indexHtmlContent = indexHtmlContent.replace(
+        regex,
+        htmlChunkContent.trim(),
+      );
+      console.log(regex);
+      console.log(indexHtmlContent);
+      await fsp.writeFile(pathToIndexHtml, indexHtmlContent);
+    });
+  } catch (err) {
+    console.error(err.message);
+  }
+}
+
 //copy styles from style folder to one styles.css
 async function createStylesFile() {
   try {
     const output = fs.createWriteStream(
-      path.join(pathToProjectDist, 'styles.css'),
+      path.join(pathToProjectDist, 'style.css'),
     );
     await fs.readdir(pathToStylesFolder, (err, files) => {
       if (err) console.error(err);
