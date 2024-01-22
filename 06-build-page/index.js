@@ -3,26 +3,12 @@ const fs = require('fs');
 const path = require('path');
 const pathToTemplate = path.join(__dirname, 'template.html');
 const pathToComponents = path.join(__dirname, 'components');
-const pathToHeader = path.join(__dirname, 'components/header.html');
-const pathToFooter = path.join(__dirname, 'components/footer.html');
-const pathToArticles = path.join(__dirname, 'components/articles.html');
 const pathToProjectDist = path.join(__dirname, 'project-dist');
 const pathToIndexHtml = path.join(pathToProjectDist, 'index.html');
 const pathToStylesFolder = path.join(__dirname, 'styles');
-let indexHtmlContent;
 
 async function buildSite() {
   try {
-    // let templateContent = await fsp.readFile(pathToTemplate, 'utf8');
-    // let headerContent = await fsp.readFile(pathToHeader, 'utf8');
-    // let footerContent = await fsp.readFile(pathToFooter, 'utf8');
-    // let articlesContent = await fsp.readFile(pathToArticles, 'utf8');
-
-    // let indexHtmlContent = templateContent
-    //   .replace(/{{header}}/, headerContent.trim())
-    //   .replace(/{{footer}}/, footerContent.trim())
-    //   .replace(/{{articles}}/, articlesContent);
-
     changeTemplateContent();
     await fsp.mkdir(pathToProjectDist, { recursive: true });
     createStylesFile();
@@ -36,7 +22,6 @@ async function buildSite() {
     const dirOfAssets = await fsp.readdir(path.join(__dirname, 'assets'));
     // copying assets
     for (let assetsDir of dirOfAssets) {
-      // console.log(assetsDir);
       fs.rm(
         path.join(__dirname, 'project-dist', assetsDir),
         { force: true, recursive: true },
@@ -72,15 +57,6 @@ async function buildSite() {
   }
 }
 
-// let headerContent = await fsp.readFile(pathToHeader, 'utf8');
-// let footerContent = await fsp.readFile(pathToFooter, 'utf8');
-// let articlesContent = await fsp.readFile(pathToArticles, 'utf8');
-
-// let indexHtmlContent = templateContent
-//   .replace(/{{header}}/, headerContent.trim())
-//   .replace(/{{footer}}/, footerContent.trim())
-//   .replace(/{{articles}}/, articlesContent);
-
 async function changeTemplateContent() {
   try {
     const templateContent = await fsp.readFile(pathToTemplate, 'utf8');
@@ -98,8 +74,6 @@ async function changeTemplateContent() {
         regex,
         htmlChunkContent.trim(),
       );
-      console.log(regex);
-      console.log(indexHtmlContent);
       await fsp.writeFile(pathToIndexHtml, indexHtmlContent);
     });
   } catch (err) {
