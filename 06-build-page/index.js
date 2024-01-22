@@ -8,7 +8,6 @@ const pathToArticles = path.join(__dirname, 'components/articles.html');
 const pathToProjectDist = path.join(__dirname, 'project-dist');
 const pathToIndexHtml = path.join(pathToProjectDist, 'index.html');
 const pathToStylesFolder = path.join(__dirname, 'styles');
-// const output = fs.createWriteStream(path.join(__dirname, 'template.html'));
 
 async function buildSite() {
   try {
@@ -25,11 +24,52 @@ async function buildSite() {
     await fsp.mkdir(pathToProjectDist, { recursive: true });
     await fsp.writeFile(pathToIndexHtml, indexHtmlContent);
     createStylesFile();
-    copyDir();
+    await fsp.rm(path.join(pathToProjectDist, 'assets'), {
+      force: true,
+      recursive: true,
+    });
+    await fsp.mkdir(path.join(pathToProjectDist, 'assets'), {
+      recursive: true,
+    });
+    const dirOfAssets = await fsp.readdir(path.join(__dirname, 'assets'));
+    // copying assets
+    for (let assetsDir of dirOfAssets) {
+      console.log(assetsDir);
+      fs.rm(
+        path.join(__dirname, 'project-dist', assetsDir),
+        { force: true, recursive: true },
+        (error) => {
+          fs.mkdir(
+            path.join(__dirname, 'project-dist', 'assets', assetsDir),
+            { recursive: true },
+            (err) => {
+              if (err) {
+                return console.error(error);
+              }
+              fs.readdir(
+                path.join(__dirname, 'assets', assetsDir),
+                (err, files) => {
+                  if (err) {
+                    console.log('error');
+                  } else {
+                    files.forEach((file) => {
+                      copyDir(assetsDir, file);
+                    });
+                    console.log('\nContents of the files folder was copied');
+                  }
+                },
+              );
+              console.log('\nDirectory created successfully!');
+            },
+          );
+        },
+      );
+    }
   } catch (err) {
     console.error(err.message);
   }
 }
+//copy styles from style folder to one styles.css
 async function createStylesFile() {
   try {
     const output = fs.createWriteStream(
@@ -38,7 +78,6 @@ async function createStylesFile() {
     await fs.readdir(pathToStylesFolder, (err, files) => {
       if (err) console.error(err);
       files.forEach((file) => {
-        // console.log(file);
         const fileExt = path.extname(file);
         if (fileExt === '.css') {
           const input = fs.createReadStream(
@@ -56,46 +95,16 @@ async function createStylesFile() {
   }
 }
 
-function copyDir() {
-  const option = {
-    withFileTypes: true,
-  };
-  fs.rm(
-    path.join(pathToProjectDist, 'assets'),
-    { force: true, recursive: true },
-    (error) => {
-      fs.mkdir(
-        path.join(pathToProjectDist, 'assets'),
-        { recursive: true },
-        (err) => {
-          if (err) {
-            return console.error(error);
-          }
-          fs.readdir(path.join(__dirname, 'assets'), option, (err, files) => {
-            if (err) {
-              console.log('error');
-            } else {
-              files.forEach((file) => {
-                console.log(file);
-                // !file.isFile() ?
-                fs.copyFile(
-                  path.join(__dirname, 'assets', file),
-                  path.join(pathToProjectDist, 'assets', file),
-                  (err) => {
-                    if (err) {
-                      console.log('Error Found:', err);
-                    } else {
-                      return;
-                    }
-                  },
-                );
-              });
-              console.log('\nContents of the files folder was copied');
-            }
-          });
-          console.log('\nDirectory created successfully!');
-        },
-      );
+function copyDir(assetsDir, file) {
+  fs.copyFile(
+    path.join(__dirname, 'assets', assetsDir, file),
+    path.join(__dirname, 'project-dist', 'assets', assetsDir, file),
+    (err) => {
+      if (err) {
+        console.log('Error Found:', err);
+      } else {
+        return;
+      }
     },
   );
 }
