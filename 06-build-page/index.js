@@ -42,11 +42,11 @@ async function buildSite() {
                     files.forEach((file) => {
                       copyDir(assetsDir, file);
                     });
-                    console.log('\nContents of the files folder was copied');
+                    // console.log('\nContents of the files folder was copied');
                   }
                 },
               );
-              console.log('\nDirectory created successfully!');
+              // console.log('\nDirectory created successfully!');
             },
           );
         },
@@ -65,15 +65,18 @@ async function changeTemplateContent() {
 
     componentsContent.forEach(async (htmlChunk) => {
       const htmlChunkName = path.parse(htmlChunk).name;
+      const htmlChunkExt = path.extname(htmlChunk);
       const htmlChunkContent = await fsp.readFile(
         path.join(__dirname, `components/${htmlChunk}`),
         'utf8',
       );
-      const regex = new RegExp(`{{${htmlChunkName}}}`);
-      indexHtmlContent = indexHtmlContent.replace(
-        regex,
-        htmlChunkContent.trim(),
-      );
+      const regex = new RegExp(`{{${htmlChunkName}}}`, 'g');
+      if (htmlChunkExt === '.html') {
+        indexHtmlContent = indexHtmlContent.replace(
+          regex,
+          htmlChunkContent.trim(),
+        );
+      }
       await fsp.writeFile(pathToIndexHtml, indexHtmlContent);
     });
   } catch (err) {
